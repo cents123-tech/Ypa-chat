@@ -1,0 +1,344 @@
+/* ============ REGISTRATION SCREEN STYLES ============ */
+
+/* ============ SCREEN CONTAINER ============ */
+.screen-container {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.registration-bg {
+   background: linear-gradient(180deg, #2d5016 0%, #1e3a0f 100%)
+}
+
+.login-bg {
+   background: linear-gradient(180deg, #2d5016 0%, #1e3a0f 100%)
+}
+
+/* ============ FORM CARD ============ */
+.form-card {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 450px;
+  width: 100%;
+  animation: slideUp 0.5s ease-out;
+}
+
+.registration-card {
+  background: linear-gradient(180deg, #2d5016 0%, #1e3a0f 100%)
+}
+
+.login-card {
+  background: linear-gradient(180deg, #2d5016 0%, #1e3a0f 100%)
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============ LOGO SECTION ============ */
+.logo-section {
+  text-align: center;
+  margin-bottom: 35px;
+  padding-bottom: 25px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.logo-circle {
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, #f9c74f 0%, #f8ad9d 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: bold;
+  color: #1e3a0f;
+  margin: 0 auto 20px;
+  box-shadow: 0 10px 30px rgba(249, 199, 79, 0.3);
+}
+
+.logo-section .title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 10px 0;
+}
+
+.logo-section .subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ============ INPUT GROUP ============ */
+.input-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input-group .input,
+.input-group input,
+.input-group select {
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  background-color: #f9fafb;
+  color: #e6eaf0ee;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  outline: none;
+  border-color: #c2ea66;
+  background-color: white;
+  box-shadow: 0 0 0 4px rgba(173, 184, 89, 0.1);
+}
+
+.input-group input::placeholder {
+  color: #9ca3af;
+}
+
+.file-input {
+  cursor: pointer;
+}
+
+.file-input::file-selector-button {
+  background: linear-gradient(135deg, #f9c74f 0%, #f8ad9d 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 12px;
+  transition: all 0.3s;
+}
+
+.file-input::file-selector-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px 
+  rgba(164, 168, 139, 0.742);
+}
+
+.preview-pic {
+  width: 100px;
+  height: 100px;
+  border-radius: 10px;
+  object-fit: cover;
+  margin-top: 12px;
+  border: 3px solid #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+/* ============ BUTTONS ============ */
+.btn {
+  padding: 14px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  text-align: center;
+  font-family: inherit;
+}
+
+.btn-register {
+  background: linear-gradient(135deg, #f9c74f 0%, #f8ad9d 100%);
+  color: white;
+  box-shadow: 0 8px 20px rgba(234, 234, 102, 0.783);
+
+  margin-bottom: 15px;
+}
+
+.btn-register:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(234, 234, 102, 0.783);
+}
+
+.btn-register:active:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-register:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-login {
+ background: linear-gradient(135deg, #f9c74f 0%, #f8ad9d 100%);
+  color: white;
+  box-shadow: 0 8px 20px rgba(245, 87, 108, 0.3);
+  margin-bottom: 15px;
+}
+
+.btn-login:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(245, 87, 108, 0.4);
+}
+
+.btn-login:active:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-login:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============ BUTTON SPARKLE ANIMATION ============ */
+@keyframes sparkle {
+  0%, 100% {
+    box-shadow: 0 8px 20px rgba(214, 234, 102, 0.774);
+  }
+  50% {
+    box-shadow: 0 8px 20px rgba(214, 234, 102, 0.774);
+  }
+}
+
+.btn:active {
+  animation: sparkle 0.4s ease-out;
+}
+
+/* ============ SWITCH TEXT ============ */
+.switch-text {
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+  font-weight: 500;
+}
+
+.link-switch {
+  color: #667eea;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+}
+
+.link-switch:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+/* ============ RESPONSIVE DESIGN ============ */
+@media (max-width: 768px) {
+  .form-card {
+    padding: 30px 20px;
+    max-width: 100%;
+  }
+
+  .logo-circle {
+    width: 70px;
+    height: 70px;
+    font-size: 28px;
+  }
+
+  .logo-section .title {
+    font-size: 24px;
+  }
+
+  .input-group {
+    margin-bottom: 16px;
+  }
+
+  .btn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .preview-pic {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .screen-container {
+    padding: 15px;
+  }
+
+  .form-card {
+    padding: 25px 15px;
+    border-radius: 12px;
+  }
+
+  .logo-circle {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+
+  .logo-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+  }
+
+  .logo-section .title {
+    font-size: 20px;
+  }
+
+  .logo-section .subtitle {
+    font-size: 12px;
+  }
+
+  .input-group {
+    margin-bottom: 14px;
+  }
+
+  .input-group label {
+    font-size: 12px;
+  }
+
+  .input-group .input,
+  .input-group input,
+  .input-group select {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .btn {
+    padding: 11px 16px;
+    font-size: 13px;
+  }
+
+  .switch-text {
+    font-size: 12px;
+  }
+
+  .preview-pic {
+    width: 70px;
+    height: 70px;
+  }
+}

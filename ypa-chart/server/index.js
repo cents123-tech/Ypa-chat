@@ -3,228 +3,238 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
-const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const server = http.createServer(app);
 
-// CORS Configuration
+const PORT = process.env.PORT || 5000;
+const JWT_SECRET = process.env.JWT_SECRET || 'ypa-secret-key-2024';
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
+
+// ============ SOCKET.IO CONFIG ============
+const io = socketIo(server, {
+  cors: {
+    origin: CLIENT_URL,
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
+// ============ MIDDLEWARE ============
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: CLIENT_URL,
   credentials: true
 }));
-
 app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.urlencoded({ limit: '50mb' }));
 
-// ============ CONNECT TO MONGODB ATLAS ============
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000,
-  retryWrites: true
-})
-  .then(() => console.log("✓ MongoDB Atlas Connected Successfully"))
-  .catch(err => {
-    console.error("✗ MongoDB connection error:", err.message);
-    process.exit(1);
-  });
-
-const db = mongoose.connection;
-
-// ============ AUTHENTICATION ROUTES ============
-
-// Check if admin exists
-app.get('/api/auth/check-admin', async (req, res) => {
-  try {
-    const admin = await db.collection('users').findOne({ role: 'admin' });
-    res.json({ adminExists: !!admin });
-  } catch (err) {
-    console.error('Error checking admin:', err);
-    res.status(500).json({ success: false, msg: 'Error checking admin' });
+// ============ IN-MEMORY DATABASE ============
+let users = [
+  { 
+    id: 'admin1', 
+    username: 'Admin', 
+    email: 'admin@ypa.com', 
+    password: '12345', 
+    role: 'admin', 
+    profilePicture: null, 
+    online: false 
+  },
+  { 
+    id: 'user1', 
+    username: 'John Doe', 
+    email: 'user@ypa.com', 
+    password: '123', 
+    role: 'user', 
+    profilePicture: null, 
+    online: false 
   }
+];
+
+let messages = [];
+let connectedUsers = {};
+
+// ============ HEALTH CHECK ============
+app.get('/api/health', (req, res) => {
+  res.json({ status: '✓ Server running', timestamp: new Date() });
 });
 
-// Register Route
-app.post('/api/auth/register', async (req, res) => {
+// ============ AUTH ROUTES ============
+app.post('/api/auth/register', (req, res) => {
   try {
-    const { username, email, password, profilePicture, role } = req.body;
+    const { username, email, password, role, profilePicture } = req.body;
 
-    console.log('Registration attempt:', { username, email, role });
-
-    // Validate input
     if (!username || !email || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        msg: 'Username, email, and password are required' 
-      });
+      return res.status(400).json({ success: false, msg: 'All fields required' });
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ 
-        success: false, 
-        msg: 'Invalid email format' 
-      });
+    const userExists = users.find(u => u.email === email);
+    if (userExists) {
+      return res.status(400).json({ success: false, msg: 'Email already registered' });
     }
 
-    // Check if user already exists
-    const existingUser = await db.collection('users').findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ 
-        success: false, 
-        msg: 'Email already registered' 
-      });
-    }
-
-    // Check if admin already exists (only one admin allowed)
-    if (role === 'admin') {
-      const existingAdmin = await db.collection('users').findOne({ role: 'admin' });
-      if (existingAdmin) {
-        return res.status(400).json({ 
-          success: false, 
-          msg: 'Admin already exists. Only one admin allowed.' 
-        });
-      }
-    }
-
-    // Hash password (basic - use bcrypt in production)
-    const hashedPassword = Buffer.from(password).toString('base64');
-
-    // Create user object
     const newUser = {
+      id: `user_${Date.now()}`,
       username,
       email,
-      password: hashedPassword,
-      profilePicture: profilePicture || null,
+      password,
       role: role || 'user',
-      online: false,
-      createdAt: new Date()
+      profilePicture: profilePicture || null,
+      online: false
     };
 
-    // Insert into database
-    const result = await db.collection('users').insertOne(newUser);
+    users.push(newUser);
+    const token = jwt.sign({ id: newUser.id, role: newUser.role }, JWT_SECRET, { expiresIn: '7d' });
 
-    // Generate simple JWT token (use jsonwebtoken in production)
-    const token = Buffer.from(JSON.stringify({ 
-      id: result.insertedId, 
-      email,
-      role 
-    })).toString('base64');
+    console.log(`✓ User registered: ${email} (${role})`);
 
-    console.log('✓ User registered successfully:', email);
-
-    res.json({
+    res.status(201).json({
       success: true,
       token,
-      user: {
-        id: result.insertedId,
-        username,
-        email,
-        profilePicture: profilePicture || null,
-        role
+      user: { 
+        id: newUser.id, 
+        username: newUser.username, 
+        email: newUser.email, 
+        role: newUser.role, 
+        profilePicture: newUser.profilePicture 
       }
     });
-
-  } catch (err) {
-    console.error('Registration error:', err);
-    res.status(500).json({ 
-      success: false, 
-      msg: 'Registration error: ' + err.message 
-    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ success: false, msg: 'Server error' });
   }
 });
 
-// Login Route
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', (req, res) => {
   try {
     const { email, password } = req.body;
 
-    console.log('Login attempt:', email);
-
-    // Validate input
     if (!email || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        msg: 'Email and password are required' 
-      });
+      return res.status(400).json({ success: false, msg: 'Email and password required' });
     }
 
-    // Find user
-    const user = await db.collection('users').findOne({ email });
+    const user = users.find(u => u.email === email && u.password === password);
     if (!user) {
-      return res.status(401).json({ 
-        success: false, 
-        msg: 'User not found' 
-      });
+      return res.status(400).json({ success: false, msg: 'Invalid email or password' });
     }
 
-    // Verify password
-    const hashedPassword = Buffer.from(password).toString('base64');
-    if (user.password !== hashedPassword) {
-      return res.status(401).json({ 
-        success: false, 
-        msg: 'Invalid password' 
-      });
-    }
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 
-    // Generate token
-    const token = Buffer.from(JSON.stringify({ 
-      id: user._id, 
-      email,
-      role: user.role 
-    })).toString('base64');
-
-    console.log('✓ User logged in successfully:', email);
+    console.log(`✓ User logged in: ${email}`);
 
     res.json({
       success: true,
       token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        profilePicture: user.profilePicture,
-        role: user.role
+      user: { 
+        id: user.id, 
+        username: user.username, 
+        email: user.email, 
+        role: user.role, 
+        profilePicture: user.profilePicture 
       }
     });
-
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ 
-      success: false, 
-      msg: 'Login error: ' + err.message 
-    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ success: false, msg: 'Server error' });
   }
 });
 
-// Test route
-app.get('/', (req, res) => {
-  res.json({ 
-    success: true, 
-    msg: '✓ Backend is running and connected to MongoDB Atlas!' 
+// ============ GET ALL USERS ============
+app.get('/api/users', (req, res) => {
+  try {
+    const allUsers = users
+      .filter(u => u.role === 'user')
+      .map(u => ({
+        id: u.id,
+        username: u.username,
+        email: u.email,
+        role: u.role,
+        profilePicture: u.profilePicture,
+        online: Object.values(connectedUsers).some(cu => cu.id === u.id)
+      }));
+
+    res.json(allUsers);
+  } catch (error) {
+    res.status(500).json({ msg: 'Server error' });
+  }
+});
+
+// ============ SOCKET.IO EVENTS ============
+io.on('connection', (socket) => {
+  console.log(`✓ Socket connected: ${socket.id}`);
+
+  socket.on('user_join', (user) => {
+    connectedUsers[user.id] = { ...user, socketId: socket.id };
+    
+    const onlineUsers = users.map(u => ({
+      ...u,
+      online: Object.values(connectedUsers).some(cu => cu.id === u.id)
+    }));
+
+    io.emit('load_users', onlineUsers);
+    io.emit('user_status_update', { userId: user.id, online: true });
+    socket.emit('load_messages', messages);
+    
+    console.log(`✓ ${user.username} joined (${user.role})`);
+  });
+
+  socket.on('send_message', (data) => {
+    const { text, recipientId, sender, media, senderRole } = data;
+
+    console.log(`📨 Message Event:`, { text, recipientId, sender, senderRole });
+
+    const message = {
+      id: `msg_${Date.now()}`,
+      text: text || '',
+      media: media || null,
+      sender,
+      senderId: sender,
+      recipientId,
+      senderRole: senderRole || 'user',
+      timestamp: new Date().toISOString()
+    };
+
+    messages.push(message);
+    console.log(`✓ Message saved. Total messages: ${messages.length}`);
+    console.log(`📊 All messages:`, messages);
+
+    io.emit('receive_message', message);
+    
+    console.log(`✓ Message from ${sender} to ${recipientId}`);
+  });
+
+  socket.on('user_typing', (data) => {
+    socket.broadcast.emit('user_typing', data);
+  });
+
+  socket.on('delete_user', (userId) => {
+    users = users.filter(u => u.id !== userId);
+    delete connectedUsers[userId];
+    io.emit('user_deleted', userId);
+    console.log(`✓ User ${userId} deleted`);
+  });
+
+  socket.on('disconnect', () => {
+    const disconnectUser = Object.values(connectedUsers).find(u => u.socketId === socket.id);
+    if (disconnectUser) {
+      delete connectedUsers[disconnectUser.id];
+      io.emit('user_status_update', { userId: disconnectUser.id, online: false });
+      console.log(`✗ ${disconnectUser.username} disconnected`);
+    }
   });
 });
 
-app.get('/api/auth/test', (req, res) => {
-  res.json({ success: true, msg: 'Auth routes working' });
-});
-
-// ============ SOCKET.IO ============
-const io = socketIo(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    methods: ["GET", "POST"]
-  }
-});
-
-io.on('connection', (socket) => {
-  console.log('✓ New client connected');
-  socket.emit('message', 'Welcome to YPA Chat!');
-});
-
-const PORT = process.env.PORT || 5000;
+// ============ START SERVER ============
 server.listen(PORT, () => {
-  console.log(`✓ Server running on port ${PORT}`);
+  console.log(`
+╔════════════════════════════════════════╗
+║                                        ║
+║   ✓ YPA Server Running                 ║
+║   ✓ Port: ${PORT}                        ║
+║   ✓ Environment: ${process.env.NODE_ENV || 'development'}              ║
+║   ✓ Client URL: ${CLIENT_URL}    ║
+║   ✓ Socket.IO Active                   ║
+║                                        ║
+╚════════════════════════════════════════╝
+  `);
 });

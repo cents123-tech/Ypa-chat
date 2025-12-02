@@ -1,223 +1,11 @@
+// App.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
+import Registration from './Registration';
+import Login from './Login';
 import './App.css';
 
 const SOCKET_URL = 'http://localhost:5000';
-
-// ============ REGISTRATION SCREEN ============
-const Registration = ({ onSwitch }) => {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    profilePicture: null,
-    role: 'user'
-  });
-  const [preview, setPreview] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, profilePicture: reader.result });
-        setPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const res = await fetch(`${SOCKET_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        alert('✓ Registration successful! Redirecting to login...');
-        onSwitch();
-      } else {
-        alert('✗ ' + (data.msg || 'Registration failed'));
-      }
-    } catch (err) {
-      alert('✗ Server error: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="screen-container registration-bg">
-      <div className="form-card registration-card">
-        <div className="logo-section">
-          <div className="logo-circle">YPA</div>
-          <h2 className="title">Create Account</h2>
-          <p className="subtitle">Join YPA Enterprise</p>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="input-group">
-            <label>Role</label>
-            <select
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              className="input"
-            >
-              <option value="user">User (Password: 123)</option>
-              <option value="admin">Admin (Password: 12345)</option>
-            </select>
-          </div>
-
-          <div className="input-group">
-            <label>Username</label>
-            <input
-              type="text"
-              placeholder="Your full name"
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="input-group">
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="your@email.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="input-group">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="input-group">
-            <label>Profile Picture</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="file-input"
-            />
-            {preview && <img src={preview} alt="Preview" className="preview-pic" />}
-          </div>
-
-          <button type="submit" className="btn btn-register" disabled={loading}>
-            {loading ? 'Creating account...' : 'Register'}
-          </button>
-
-          <p className="switch-text">
-            Already registered?{' '}
-            <span onClick={onSwitch} className="link-switch">
-              Login here
-            </span>
-          </p>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-// ============ LOGIN SCREEN ============
-const Login = ({ onSwitch }) => {
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const res = await fetch(`${SOCKET_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        window.location.reload();
-      } else {
-        alert('✗ Invalid credentials\n\nTry:\nAdmin: admin@ypa.com / 12345\nUser: user@ypa.com / 123');
-      }
-    } catch (err) {
-      alert('✗ Server error: Is backend running on port 5000?');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="screen-container login-bg">
-      <div className="form-card login-card">
-        <div className="logo-section">
-          <div className="logo-circle">YPA</div>
-          <h2 className="title">Login</h2>
-          <p className="subtitle">Access YPA Platform</p>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="input-group">
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="admin@ypa.com or user@ypa.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="input-group">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
-            />
-          </div>
-
-          <button type="submit" className="btn btn-login" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-
-          <p className="switch-text">
-            New to YPA?{' '}
-            <span onClick={onSwitch} className="link-switch">
-              Register here
-            </span>
-          </p>
-        </form>
-      </div>
-    </div>
-  );
-};
 
 // ============ USER DASHBOARD ============
 const UserDashboard = ({ user, socket, onLogout }) => {
@@ -253,7 +41,8 @@ const UserDashboard = ({ user, socket, onLogout }) => {
         text: newMessage,
         media: mediaFile,
         recipientId: 'admin1',
-        sender: user.id
+        sender: user.id,
+        senderRole: 'user'
       });
       setNewMessage('');
       setMediaFile(null);
@@ -300,15 +89,17 @@ const UserDashboard = ({ user, socket, onLogout }) => {
               <p>👋 Start a conversation with admin</p>
             </div>
           ) : (
-            messages.map((msg, idx) => (
-              <div key={idx} className={`message-row ${msg.sender === user.id ? 'user-msg' : 'admin-msg'}`}>
-                <div className="message-bubble">
-                  {msg.text && <p>{msg.text}</p>}
-                  {msg.media && <div className="media-display">[{msg.media.type.split('/')[0].toUpperCase()}]</div>}
-                  <span className="timestamp">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+            messages
+              .filter(m => (m.senderId === user.id && m.recipientId === 'admin1') || (m.senderId === 'admin1' && m.recipientId === user.id))
+              .map((msg, idx) => (
+                <div key={idx} className={`message-row ${msg.senderId === user.id ? 'user-msg' : 'admin-msg'}`}>
+                  <div className="message-bubble">
+                    {msg.text && <p>{msg.text}</p>}
+                    {msg.media && <div className="media-display">[{msg.media.type.split('/')[0].toUpperCase()}]</div>}
+                    <span className="timestamp">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))
           )}
           <div ref={messagesEndRef} />
         </div>
@@ -394,7 +185,8 @@ const AdminDashboard = ({ user, socket, onLogout }) => {
         text: newMessage,
         media: mediaFile,
         recipientId: selectedUser.id,
-        sender: user.id
+        sender: user.id,
+        senderRole: 'admin'
       });
       setNewMessage('');
       setMediaFile(null);
@@ -546,13 +338,13 @@ const AdminDashboard = ({ user, socket, onLogout }) => {
                   </div>
 
                   <div className="messages-box">
-                    {messages.filter(m => (m.senderId === selectedUser.id || m.recipientId === selectedUser.id)).length === 0 ? (
+                    {messages.filter(m => (m.senderId === selectedUser.id && m.recipientId === user.id) || (m.senderId === user.id && m.recipientId === selectedUser.id)).length === 0 ? (
                       <div className="empty-state">No messages with this user</div>
                     ) : (
                       messages
-                        .filter(m => m.senderId === selectedUser.id || m.recipientId === selectedUser.id)
+                        .filter(m => (m.senderId === selectedUser.id && m.recipientId === user.id) || (m.senderId === user.id && m.recipientId === selectedUser.id))
                         .map((msg, idx) => (
-                          <div key={idx} className={`message-row ${msg.sender === user.id ? 'admin-msg' : 'user-msg'}`}>
+                          <div key={idx} className={`message-row ${msg.senderId === user.id ? 'admin-msg' : 'user-msg'}`}>
                             <div className="message-bubble">
                               {msg.text && <p>{msg.text}</p>}
                               {msg.media && <div className="media-display">[{msg.media.type.split('/')[0].toUpperCase()}]</div>}
