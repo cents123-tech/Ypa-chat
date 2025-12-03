@@ -25,14 +25,17 @@ Customers talk only to Admin (CEO). Admin controls everything.
 - Auth: JWT
 
 ## Quick Start
+##**start the server**
+Navigate to the server folder and type node index.js
+After the server starts
 
-```bash
-# Backend
-cd server
-npm install
-npm run dev
+Start the frontend'
+Navigate to the ypa-chart and type npm run dev
+After the code the front end will start at the https//:localhost 5173 in the browser.
 
-# Frontend
-cd client
-npm install
-npm run dev
+**##Registration and Login**
+One should register first inorder to login
+Login details are the one to be used at the login page.
+There should be only one admin registered and logged in 
+Users can be many as preferred.
+
