@@ -64,6 +64,8 @@ app.post('/api/auth/register', (req, res) => {
   try {
     const { username, email, password, role, profilePicture } = req.body;
 
+    console.log('📝 REGISTER REQUEST:', { username, email, role });
+
     if (!username || !email || !password) {
       return res.status(400).json({ success: false, msg: 'All fields required' });
     }
@@ -86,7 +88,8 @@ app.post('/api/auth/register', (req, res) => {
     users.push(newUser);
     const token = jwt.sign({ id: newUser.id, role: newUser.role }, JWT_SECRET, { expiresIn: '7d' });
 
-    console.log(`✓ User registered: ${email} (${role})`);
+    console.log(`✅ User registered: ${email} (${role})`);
+    console.log(`📊 Total users now: ${users.length}`);
 
     res.status(201).json({
       success: true,
@@ -159,6 +162,11 @@ app.get('/api/users', (req, res) => {
   }
 });
 
+// ============ GET ALL MESSAGES ============
+app.get('/api/messages', (req, res) => {
+  res.json(messages);
+});
+
 // ============ SOCKET.IO EVENTS ============
 io.on('connection', (socket) => {
   console.log(`✓ Socket connected: ${socket.id}`);
@@ -173,6 +181,19 @@ io.on('connection', (socket) => {
 
     io.emit('load_users', onlineUsers);
     io.emit('user_status_update', { userId: user.id, online: true });
+    
+    // 🔔 NOTIFY ADMIN THAT USER LOGGED IN
+    if (user.role === 'user') {
+      io.emit('user_login_notification', {
+        message: `${user.username} has logged in and is ready to chat!`,
+        username: user.username,
+        userId: user.id,
+        timestamp: new Date()
+      });
+      console.log(`🔔 Notifying admin: ${user.username} logged in`);
+    }
+    
+    // Send ALL messages to this user
     socket.emit('load_messages', messages);
     
     console.log(`✓ ${user.username} joined (${user.role})`);
@@ -181,7 +202,7 @@ io.on('connection', (socket) => {
   socket.on('send_message', (data) => {
     const { text, recipientId, sender, media, senderRole } = data;
 
-    console.log(`📨 Message Event:`, { text, recipientId, sender, senderRole });
+    console.log('📨 MESSAGE RECEIVED:', { text, sender, recipientId, senderRole });
 
     const message = {
       id: `msg_${Date.now()}`,
@@ -195,12 +216,13 @@ io.on('connection', (socket) => {
     };
 
     messages.push(message);
-    console.log(`✓ Message saved. Total messages: ${messages.length}`);
-    console.log(`📊 All messages:`, messages);
+    
+    console.log(`✅ MESSAGE SAVED - Total: ${messages.length}`);
 
+    // Broadcast to ALL clients
     io.emit('receive_message', message);
     
-    console.log(`✓ Message from ${sender} to ${recipientId}`);
+    console.log(`✓ Broadcasted to all clients`);
   });
 
   socket.on('user_typing', (data) => {
@@ -228,13 +250,10 @@ io.on('connection', (socket) => {
 server.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════╗
-║                                        ║
 ║   ✓ YPA Server Running                 ║
 ║   ✓ Port: ${PORT}                        ║
-║   ✓ Environment: ${process.env.NODE_ENV || 'development'}              ║
-║   ✓ Client URL: ${CLIENT_URL}    ║
+║   ✓ Users: ${users.length}                        ║
 ║   ✓ Socket.IO Active                   ║
-║                                        ║
 ╚════════════════════════════════════════╝
   `);
 });
