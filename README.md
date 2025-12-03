@@ -34,8 +34,13 @@ Navigate to the ypa-chart and type npm run dev
 After the code the front end will start at the https//:localhost 5173 in the browser.
 
 **##Registration and Login**
-One should register first inorder to login
-Login details are the one to be used at the login page.
+Open 2 browsers and open them as both the admin and user
+One should register first inorder to login Eg. User/admin, brand(User name), brand@gmail.com(Email), 123(password), profile picture
+Login details are the one to be used at the login page.Eg. brand@gmail.com(Email), 123(password)
 There should be only one admin registered and logged in 
 Users can be many as preferred.
+
+**##Admin and User dashboard**
+Admin can add users, can view users and can change the settings
+A User can send messages to the admin about any inquiry or anything concerning the farm
 
