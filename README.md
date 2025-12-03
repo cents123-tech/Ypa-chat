@@ -9,7 +9,7 @@ Customers talk only to Admin (CEO). Admin controls everything.
 - Send text, images, videos, audio
 - Admin sees all users (online/offline)
 - Admin can add or delete users
-- Dark/Light mode
+- Dark/Light mode from the Admin Dashboard.
 
 ## Screens
 1. Register → Create account (first user becomes Admin)
@@ -30,8 +30,8 @@ Navigate to the server folder and type node index.js
 After the server starts.
 
 **##Start the frontend'**
-Navigate to the ypa-chart and type npm run dev.
-After the code the front end will start at the https//:localhost 5173 in the browser.
+Navigate to the ypa-chart folder and type npm run dev and press enter.
+After the browser the frontend will start at the https//:localhost 5173 in the browser.
 
 **##Registration and Login**
 Open 2 browsers and open them as both the admin and user
